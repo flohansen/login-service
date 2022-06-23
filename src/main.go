@@ -21,8 +21,10 @@ func runApplication() int {
 	port := os.Getenv("FITTER_LOGIN_SERVICE_PORT")
 	addr := fmt.Sprintf("%s:%s", host, port)
 
+	server := &http.Server{Addr: addr, Handler: router}
+
 	fmt.Printf("Starting service at %s", addr)
-	if err := http.ListenAndServe(addr, router); err != nil {
+	if err := server.ListenAndServe(); err != nil {
 		fmt.Printf("An error occured while starting the server: %v", err)
 		return 1
 	}
