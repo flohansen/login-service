@@ -19,29 +19,22 @@ type LoginServiceConfig struct {
 }
 
 type LoginService struct {
-	Handler *httprouter.Router
-	Config  LoginServiceConfig
-	Db      database.SqlDatabase
+	handler    *httprouter.Router
+	config     LoginServiceConfig
+	db         database.SqlDatabase
+	hashEngine security.HashEngine
 }
 
-func New(cfg LoginServiceConfig) (*LoginService, error) {
-	db, err := database.New(cfg.Database)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewService(cfg, db), nil
-}
-
-func NewService(cfg LoginServiceConfig, db database.SqlDatabase) *LoginService {
+func NewService(cfg LoginServiceConfig, db database.SqlDatabase, hashEngine security.HashEngine) *LoginService {
 	service := &LoginService{
-		Handler: httprouter.New(),
-		Config:  cfg,
-		Db:      db,
+		handler:    httprouter.New(),
+		config:     cfg,
+		db:         db,
+		hashEngine: hashEngine,
 	}
 
-	service.Handler.POST("/api/auth/login", service.LoginHandler)
-	service.Handler.POST("/api/auth/register", service.RegisterHandler)
+	service.handler.POST("/api/auth/login", service.LoginHandler)
+	service.handler.POST("/api/auth/register", service.RegisterHandler)
 	return service
 }
 
@@ -66,14 +59,14 @@ func NewConfigFromEnv() LoginServiceConfig {
 }
 
 func (service *LoginService) GetAddr() string {
-	return fmt.Sprintf("%s:%d", service.Config.Host, service.Config.Port)
+	return fmt.Sprintf("%s:%d", service.config.Host, service.config.Port)
 }
 
 func (service *LoginService) Start() error {
-	return http.ListenAndServe(service.GetAddr(), service.Handler)
+	return http.ListenAndServe(service.GetAddr(), service.handler)
 }
 
 func (service *LoginService) Server() *http.Server {
-	server := &http.Server{Addr: service.GetAddr(), Handler: service.Handler}
+	server := &http.Server{Addr: service.GetAddr(), Handler: service.handler}
 	return server
 }

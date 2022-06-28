@@ -1,25 +1,12 @@
 package loginservice
 
 import (
-	"flhansen/fitter-login-service/src/database"
 	"flhansen/fitter-login-service/src/testhelper"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestNewWithConfig(t *testing.T) {
-	service, err := New(LoginServiceConfig{})
-	assert.NotNil(t, service)
-	assert.Nil(t, err)
-}
-
-func TestNewWithInvalidConfig(t *testing.T) {
-	service, err := New(LoginServiceConfig{Host: "0.0.0.0", Port: -1, Database: database.DatabaseConfig{Port: -1}})
-	assert.Nil(t, service)
-	assert.NotNil(t, err)
-}
 
 func TestNewConfigFromEnv(t *testing.T) {
 	t.Cleanup(testhelper.CreateTestEnvironment(map[string]string{
@@ -51,7 +38,9 @@ func TestGetAddr(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_PORT": "8000",
 	}))
 
-	service, _ := New(NewConfigFromEnv())
+	mockedDatabase := new(DatabaseMock)
+	mockedHashEngine := new(HashEngineMock)
+	service := NewService(NewConfigFromEnv(), mockedDatabase, mockedHashEngine)
 	addr := service.GetAddr()
 
 	assert.Equal(t, "0.0.0.0:8000", addr)
@@ -63,7 +52,9 @@ func TestStart(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_PORT": "8000",
 	}))
 
-	service, _ := New(NewConfigFromEnv())
+	mockedDatabase := new(DatabaseMock)
+	mockedHashEngine := new(HashEngineMock)
+	service := NewService(NewConfigFromEnv(), mockedDatabase, mockedHashEngine)
 
 	done := make(chan error)
 	go func() {
@@ -84,7 +75,9 @@ func TestServer(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_PORT": "8001",
 	}))
 
-	service, _ := New(NewConfigFromEnv())
+	mockedDatabase := new(DatabaseMock)
+	mockedHashEngine := new(HashEngineMock)
+	service := NewService(NewConfigFromEnv(), mockedDatabase, mockedHashEngine)
 	server := service.Server()
 
 	done := make(chan error)

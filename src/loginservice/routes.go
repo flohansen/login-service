@@ -51,7 +51,7 @@ func (service *LoginService) LoginHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user, err := service.Db.GetUserByUsername(request.Username)
+	user, err := service.db.GetUserByUsername(request.Username)
 	if err != nil {
 		sendSimpleResponse(w, http.StatusUnauthorized, "Wrong user credentials.")
 		return
@@ -62,7 +62,7 @@ func (service *LoginService) LoginHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	token, _ := security.GenerateToken(user.Id, user.Username, jwt.SigningMethodHS256, []byte(service.Config.Jwt.SignKey))
+	token, _ := security.GenerateToken(user.Id, user.Username, jwt.SigningMethodHS256, []byte(service.config.Jwt.SignKey))
 
 	sendResponse(w, 200, "User login successful.", map[string]interface{}{
 		"token": token,
@@ -76,14 +76,19 @@ func (service *LoginService) RegisterHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err := service.Db.GetUserByUsername(request.Username)
+	_, err := service.db.GetUserByUsername(request.Username)
 	if err != nil {
 		sendSimpleResponse(w, http.StatusBadRequest, "User already exists.")
 		return
 	}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(request.Password), 8)
-	id, err := service.Db.CreateUser(database.DbUser{
+	passwordHash, err := service.hashEngine.HashPassword([]byte(request.Password))
+	if err != nil {
+		sendSimpleResponse(w, http.StatusInternalServerError, "Could not register user.")
+		return
+	}
+
+	id, err := service.db.CreateUser(database.DbUser{
 		Username:     request.Username,
 		Password:     string(passwordHash),
 		Email:        request.Email,
