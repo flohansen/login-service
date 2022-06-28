@@ -1,12 +1,9 @@
 package main
 
 import (
-	"flhansen/fitter-login-service/src/routes"
+	"flhansen/fitter-login-service/src/loginservice"
 	"fmt"
-	"net/http"
 	"os"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
@@ -14,18 +11,16 @@ func main() {
 }
 
 func runApplication() int {
-	router := httprouter.New()
-	router.GET("/hello", routes.HelloWorldHandler)
+	cfg := loginservice.NewConfigFromEnv()
+	service, err := loginservice.New(cfg)
+	if err != nil {
+		fmt.Printf("An error occured while creating the service: %v", err)
+		return 1
+	}
 
-	host := os.Getenv("FITTER_LOGIN_SERVICE_HOST")
-	port := os.Getenv("FITTER_LOGIN_SERVICE_PORT")
-	addr := fmt.Sprintf("%s:%s", host, port)
-
-	server := &http.Server{Addr: addr, Handler: router}
-
-	fmt.Printf("Starting service at %s", addr)
-	if err := server.ListenAndServe(); err != nil {
-		fmt.Printf("An error occured while starting the server: %v", err)
+	fmt.Printf("Starting service at %s", service.GetAddr())
+	if err := service.Start(); err != nil {
+		fmt.Printf("An error occured while starting the service: %v", err)
 		return 1
 	}
 

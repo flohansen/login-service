@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@aws-cdk/aws-lambda": "^1.161.0",
+    "@aws-cdk/aws-lambda-go": "^1.161.0"
+  }
+}
