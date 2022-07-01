@@ -1,7 +1,7 @@
 package loginservice
 
 import (
-	"flhansen/fitter-login-service/src/database"
+	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
 	"fmt"
 	"net/http"
@@ -12,24 +12,22 @@ import (
 )
 
 type LoginServiceConfig struct {
-	Host     string
-	Port     int
-	Database database.DatabaseConfig
-	Jwt      security.JwtConfig
+	Host string
+	Port int
+	Jwt  security.JwtConfig
 }
 
 type LoginService struct {
-	handler    *httprouter.Router
-	config     LoginServiceConfig
-	db         database.SqlDatabase
-	hashEngine security.HashEngine
+	handler     *httprouter.Router
+	config      LoginServiceConfig
+	accountRepo repository.AccountRepository
+	hashEngine  security.HashEngine
 }
 
-func NewService(cfg LoginServiceConfig, db database.SqlDatabase, hashEngine security.HashEngine) *LoginService {
+func NewService(cfg LoginServiceConfig, hashEngine security.HashEngine) *LoginService {
 	service := &LoginService{
 		handler:    httprouter.New(),
 		config:     cfg,
-		db:         db,
 		hashEngine: hashEngine,
 	}
 
@@ -39,19 +37,11 @@ func NewService(cfg LoginServiceConfig, db database.SqlDatabase, hashEngine secu
 }
 
 func NewConfigFromEnv() LoginServiceConfig {
-	dbPort, _ := strconv.Atoi(os.Getenv("FITTER_LOGIN_SERVICE_DB_PORT"))
 	port, _ := strconv.Atoi(os.Getenv("FITTER_LOGIN_SERVICE_PORT"))
 
 	return LoginServiceConfig{
 		Host: os.Getenv("FITTER_LOGIN_SERVICE_HOST"),
 		Port: port,
-		Database: database.DatabaseConfig{
-			Host:   os.Getenv("FITTER_LOGIN_SERVICE_DB_HOST"),
-			Port:   dbPort,
-			Name:   os.Getenv("FITTER_LOGIN_SERVICE_DB_NAME"),
-			User:   os.Getenv("FITTER_LOGIN_SERVICE_DB_USER"),
-			Region: os.Getenv("AWS_REGION"),
-		},
 		Jwt: security.JwtConfig{
 			SignKey: os.Getenv("FITTER_LOGIN_SERVICE_JWT_SIGNKEY"),
 		},

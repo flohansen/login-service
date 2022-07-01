@@ -13,11 +13,9 @@ func TestNewConfigFromEnv(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_DB_HOST":     "localhost",
 		"FITTER_LOGIN_SERVICE_DB_PORT":     "5432",
 		"FITTER_LOGIN_SERVICE_DB_NAME":     "testdb",
-		"FITTER_LOGIN_SERVICE_DB_USER":     "testuser",
 		"FITTER_LOGIN_SERVICE_HOST":        "0.0.0.0",
 		"FITTER_LOGIN_SERVICE_PORT":        "8000",
 		"FITTER_LOGIN_SERVICE_JWT_SIGNKEY": "secret",
-		"AWS_REGION":                       "eu-central-1",
 	}))
 
 	config := NewConfigFromEnv()
@@ -25,11 +23,9 @@ func TestNewConfigFromEnv(t *testing.T) {
 	assert.Equal(t, "localhost", config.Database.Host)
 	assert.Equal(t, 5432, config.Database.Port)
 	assert.Equal(t, "testdb", config.Database.Name)
-	assert.Equal(t, "testuser", config.Database.User)
 	assert.Equal(t, "0.0.0.0", config.Host)
 	assert.Equal(t, 8000, config.Port)
 	assert.Equal(t, "secret", config.Jwt.SignKey)
-	assert.Equal(t, "eu-central-1", config.Database.Region)
 }
 
 func TestGetAddr(t *testing.T) {

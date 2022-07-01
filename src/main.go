@@ -13,8 +13,13 @@ func main() {
 }
 
 func runApplication() int {
+	username := os.Getenv("FITTER_LOGIN_SERVICE_DB_USERNAME")
+	region := os.Getenv("AWS_REGION")
+
 	cfg := loginservice.NewConfigFromEnv()
-	db, err := database.New(cfg.Database)
+	credentialsProvider := security.NewAwsCredentialsProvider(cfg.Database.Host, cfg.Database.Port, username, region)
+
+	db, err := database.NewPostgresDatabase(cfg.Database, credentialsProvider)
 	if err != nil {
 		fmt.Printf("An error occured while creating the database connection: %v", err)
 		return 1
