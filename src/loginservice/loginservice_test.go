@@ -1,6 +1,7 @@
 package loginservice
 
 import (
+	"flhansen/fitter-login-service/src/mocks"
 	"flhansen/fitter-login-service/src/testhelper"
 	"testing"
 	"time"
@@ -20,9 +21,6 @@ func TestNewConfigFromEnv(t *testing.T) {
 
 	config := NewConfigFromEnv()
 
-	assert.Equal(t, "localhost", config.Database.Host)
-	assert.Equal(t, 5432, config.Database.Port)
-	assert.Equal(t, "testdb", config.Database.Name)
 	assert.Equal(t, "0.0.0.0", config.Host)
 	assert.Equal(t, 8000, config.Port)
 	assert.Equal(t, "secret", config.Jwt.SignKey)
@@ -34,9 +32,9 @@ func TestGetAddr(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_PORT": "8000",
 	}))
 
-	mockedDatabase := new(DatabaseMock)
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(NewConfigFromEnv(), mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	service, _ := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
 	addr := service.GetAddr()
 
 	assert.Equal(t, "0.0.0.0:8000", addr)
@@ -48,9 +46,9 @@ func TestStart(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_PORT": "8000",
 	}))
 
-	mockedDatabase := new(DatabaseMock)
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(NewConfigFromEnv(), mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	service, _ := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
 
 	done := make(chan error)
 	go func() {
@@ -71,9 +69,9 @@ func TestServer(t *testing.T) {
 		"FITTER_LOGIN_SERVICE_PORT": "8001",
 	}))
 
-	mockedDatabase := new(DatabaseMock)
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(NewConfigFromEnv(), mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	service, _ := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
 	server := service.Server()
 
 	done := make(chan error)

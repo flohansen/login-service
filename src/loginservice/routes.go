@@ -2,7 +2,7 @@ package loginservice
 
 import (
 	"encoding/json"
-	"flhansen/fitter-login-service/src/database"
+	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
 	"net/http"
 	"time"
@@ -51,7 +51,7 @@ func (service *LoginService) LoginHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user, err := service.db.GetUserByUsername(request.Username)
+	user, err := service.accountRepo.GetAccountByUsername(request.Username)
 	if err != nil {
 		sendSimpleResponse(w, http.StatusUnauthorized, "Wrong user credentials.")
 		return
@@ -76,8 +76,8 @@ func (service *LoginService) RegisterHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err := service.db.GetUserByUsername(request.Username)
-	if err != nil {
+	_, err := service.accountRepo.GetAccountByUsername(request.Username)
+	if err == nil {
 		sendSimpleResponse(w, http.StatusBadRequest, "User already exists.")
 		return
 	}
@@ -88,7 +88,7 @@ func (service *LoginService) RegisterHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	id, err := service.db.CreateUser(database.DbUser{
+	id, err := service.accountRepo.CreateAccount(repository.Account{
 		Username:     request.Username,
 		Password:     string(passwordHash),
 		Email:        request.Email,

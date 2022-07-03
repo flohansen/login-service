@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"flhansen/fitter-login-service/src/database"
+	"flhansen/fitter-login-service/src/mocks"
+	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
 	"net/http"
 	"net/http/httptest"
@@ -15,53 +16,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type DatabaseMock struct {
-	mock.Mock
-}
-
-func (m *DatabaseMock) CreateUser(user database.DbUser) (int, error) {
-	args := m.Called(user)
-	return args.Int(0), args.Error(1)
-}
-
-func (m *DatabaseMock) DeleteUserById(id int) error {
-	args := m.Called(id)
-	return args.Error(0)
-}
-
-func (m *DatabaseMock) GetUserById(id int) (database.DbUser, error) {
-	args := m.Called(id)
-	return args.Get(0).(database.DbUser), args.Error(1)
-}
-
-func (m *DatabaseMock) GetUserByUsername(username string) (database.DbUser, error) {
-	args := m.Called(username)
-	return args.Get(0).(database.DbUser), args.Error(1)
-}
-
-type HashEngineMock struct {
-	mock.Mock
-}
-
-func (m *HashEngineMock) HashPassword(password []byte) ([]byte, error) {
-	args := m.Called(password)
-	return args.Get(0).([]byte), args.Error(1)
-}
-
 func TestLoginHandlerSuccess(t *testing.T) {
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("testpass"), 8)
-
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", "testuser").
-		Return(database.DbUser{Username: "testuser", Password: string(passwordHash)}, nil).
-		Once()
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(LoginServiceConfig{
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("testpass"), 8)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedHashEngine.
+		On("HashPassword", mock.Anything).
+		Return(hashedPassword, nil)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.
+		On("GetAccountByUsername", mock.Anything).
+		Return(repository.Account{Password: string(hashedPassword)}, nil)
+	service, _ := NewService(LoginServiceConfig{
 		Jwt: security.JwtConfig{
 			SignKey: "secret",
 		},
-	}, mockedDatabase, mockedHashEngine)
+	}, mockedAccountRepo, mockedHashEngine)
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuser",
@@ -91,15 +60,12 @@ func TestLoginHandlerSuccess(t *testing.T) {
 }
 
 func TestLoginHandlerWrongCredentials(t *testing.T) {
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("testpass"), 8)
-
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", "testuser").
-		Return(database.DbUser{Username: "testuser", Password: string(passwordHash)}, nil).
-		Once()
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.
+		On("GetAccountByUsername", mock.Anything).
+		Return(repository.Account{}, nil)
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuser",
@@ -129,13 +95,10 @@ func TestLoginHandlerWrongCredentials(t *testing.T) {
 }
 
 func TestLoginHandlerUserNotExist(t *testing.T) {
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", mock.Anything).
-		Return(database.DbUser{}, errors.New("user does not exist")).
-		Once()
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.On("GetAccountByUsername", mock.Anything).Return(repository.Account{}, errors.New("err"))
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuserxyz",
@@ -165,15 +128,9 @@ func TestLoginHandlerUserNotExist(t *testing.T) {
 }
 
 func TestLoginHandlerBadRequest(t *testing.T) {
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("testpass"), 8)
-
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", "testuser").
-		Return(database.DbUser{Username: "testuser", Password: string(passwordHash)}, nil).
-		Once()
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	requestBody := []byte("{ username: ")
 	request, err := http.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBuffer(requestBody))
@@ -198,9 +155,9 @@ func TestLoginHandlerBadRequest(t *testing.T) {
 func TestRegisterHandlerShouldReturnErrorIfInvalidJsonBody(t *testing.T) {
 	// given
 	invalidBody := []byte(`{ username: " }`)
-	mockedDatabase := new(DatabaseMock)
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(invalidBody))
@@ -219,14 +176,11 @@ func TestRegisterHandlerShouldReturnErrorIfInvalidJsonBody(t *testing.T) {
 
 func TestRegisterHandlerShouldReturnErrorIfUserAlreadyExists(t *testing.T) {
 	// given
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", mock.Anything).
-		Return(database.DbUser{}, errors.New("user already exists")).
-		Once()
 	body := []byte(`{ "username": "testuser", "password": "testpass", "email": "testmail@test.com" }`)
-	mockedHashEngine := new(HashEngineMock)
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedHashEngine := new(mocks.HashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.On("GetAccountByUsername", mock.Anything).Return(repository.Account{}, nil)
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -245,21 +199,19 @@ func TestRegisterHandlerShouldReturnErrorIfUserAlreadyExists(t *testing.T) {
 
 func TestRegisterHandlerShouldReturnErrorWhenCreatingUserFailed(t *testing.T) {
 	// given
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", mock.Anything).
-		Return(database.DbUser{}, nil).
-		Once().
-		On("CreateUser", mock.Anything).
-		Return(-1, errors.New("could not create user")).
-		Once()
 	body := []byte(`{ "username": "testuser", "password": "testpass", "email": "testmail@test.com" }`)
-	mockedHashEngine := new(HashEngineMock)
+	mockedHashEngine := new(mocks.HashEngine)
 	mockedHashEngine.
 		On("HashPassword", mock.Anything).
 		Return([]byte{}, nil).
 		Once()
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.
+		On("GetAccountByUsername", mock.Anything).
+		Return(repository.Account{}, errors.New("user not found")).
+		On("CreateAccount", mock.Anything).
+		Return(-1, errors.New("could not create user"))
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -278,21 +230,17 @@ func TestRegisterHandlerShouldReturnErrorWhenCreatingUserFailed(t *testing.T) {
 
 func TestRegisterHandlerShouldReturnErrorIfPasswordCouldNotBeHashed(t *testing.T) {
 	// given
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", mock.Anything).
-		Return(database.DbUser{}, nil).
-		Once().
-		On("CreateUser", mock.Anything).
-		Return(0, nil).
-		Once()
 	body := []byte(`{ "username": "testuser", "password": "testpass", "email": "testmail@test.com" }`)
-	mockedHashEngine := new(HashEngineMock)
+	mockedHashEngine := new(mocks.HashEngine)
 	mockedHashEngine.
 		On("HashPassword", mock.Anything).
 		Return([]byte{}, errors.New("error while hashing password")).
 		Once()
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.
+		On("GetAccountByUsername", mock.Anything).
+		Return(repository.Account{}, errors.New("user not found"))
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -311,20 +259,18 @@ func TestRegisterHandlerShouldReturnErrorIfPasswordCouldNotBeHashed(t *testing.T
 
 func TestRegisterHandlerSucceeded(t *testing.T) {
 	// given
-	mockedDatabase := new(DatabaseMock)
-	mockedDatabase.
-		On("GetUserByUsername", mock.Anything).
-		Return(database.DbUser{}, nil).
-		Once().
-		On("CreateUser", mock.Anything).
-		Return(0, nil).
-		Once()
 	body := []byte(`{ "username": "testuser", "password": "testpass", "email": "testmail@test.com" }`)
-	mockedHashEngine := new(HashEngineMock)
+	mockedHashEngine := new(mocks.HashEngine)
 	mockedHashEngine.
 		On("HashPassword", mock.Anything).
 		Return([]byte{}, nil)
-	service := NewService(LoginServiceConfig{}, mockedDatabase, mockedHashEngine)
+	mockedAccountRepo := new(mocks.AccountRepository)
+	mockedAccountRepo.
+		On("GetAccountByUsername", mock.Anything).
+		Return(repository.Account{}, errors.New("user not found")).
+		On("CreateAccount", mock.Anything).
+		Return(1, nil)
+	service, _ := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))

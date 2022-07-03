@@ -11,10 +11,19 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type DatabaseConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	Database string
+}
+
 type LoginServiceConfig struct {
-	Host string
-	Port int
-	Jwt  security.JwtConfig
+	Host     string
+	Port     int
+	Jwt      security.JwtConfig
+	Database DatabaseConfig
 }
 
 type LoginService struct {
@@ -24,16 +33,17 @@ type LoginService struct {
 	hashEngine  security.HashEngine
 }
 
-func NewService(cfg LoginServiceConfig, hashEngine security.HashEngine) *LoginService {
+func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository, hashEngine security.HashEngine) (*LoginService, error) {
 	service := &LoginService{
-		handler:    httprouter.New(),
-		config:     cfg,
-		hashEngine: hashEngine,
+		handler:     httprouter.New(),
+		config:      cfg,
+		hashEngine:  hashEngine,
+		accountRepo: accountRepo,
 	}
 
 	service.handler.POST("/api/auth/login", service.LoginHandler)
 	service.handler.POST("/api/auth/register", service.RegisterHandler)
-	return service
+	return service, nil
 }
 
 func NewConfigFromEnv() LoginServiceConfig {
