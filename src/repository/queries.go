@@ -32,5 +32,6 @@ const (
 
 	QUERY_DELETE_ACCOUNT_BY_ID = `
 	DELETE FROM Account
-	WHERE id = $1`
+	WHERE id = $1
+	RETURNING id`
 )

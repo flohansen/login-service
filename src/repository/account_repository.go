@@ -30,11 +30,7 @@ type accountRepository struct {
 
 func NewAccountRepository(host string, port int, username string, password string, databaseName string) (AccountRepository, error) {
 	dsn := database.DataSourceName(host, port, username, password, databaseName)
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, err
-	}
+	db, _ := sql.Open("postgres", dsn)
 
 	return &accountRepository{
 		db: db,
@@ -44,7 +40,7 @@ func NewAccountRepository(host string, port int, username string, password strin
 func (repo *accountRepository) CreateAccount(account Account) (int, error) {
 	row := repo.db.QueryRow(QUERY_CREATE_ACCOUNT, account.Username, account.Password, account.Email, account.CreationDate)
 
-	var id int
+	id := -1
 	err := row.Scan(&id)
 	return id, err
 }
@@ -66,7 +62,10 @@ func (repo *accountRepository) GetAccountByUsername(username string) (Account, e
 }
 
 func (repo *accountRepository) DeleteAccountById(id int) error {
-	_, err := repo.db.Exec(QUERY_DELETE_ACCOUNT_BY_ID, id)
+	row := repo.db.QueryRow(QUERY_DELETE_ACCOUNT_BY_ID, id)
+
+	deletedId := -1
+	err := row.Scan(&deletedId)
 	return err
 }
 
