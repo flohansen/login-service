@@ -5,17 +5,11 @@ import (
 	"encoding/json"
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/orlangure/gnomock"
-	"github.com/orlangure/gnomock/preset/localstack"
 	"github.com/orlangure/gnomock/preset/postgres"
 	"github.com/stretchr/testify/suite"
 )
@@ -24,30 +18,11 @@ type LoginServiceTestSuite struct {
 	suite.Suite
 	accountRepo  repository.AccountRepository
 	loginService *LoginService
-	localstack   *gnomock.Container
 	database     *gnomock.Container
-	session      *session.Session
 }
 
 func TestLoginServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(LoginServiceTestSuite))
-}
-
-func (s *LoginServiceTestSuite) setupLocalstack() {
-	preset := localstack.Preset(
-		localstack.WithVersion("0.12.2"))
-	s.localstack, _ = gnomock.Start(preset)
-
-	s.T().Cleanup(func() { gnomock.Stop(s.localstack) })
-}
-
-func (s *LoginServiceTestSuite) setupAwsLocalstack() {
-	s.session, _ = session.NewSession(&aws.Config{
-		Credentials: credentials.NewStaticCredentials("test", "test", ""),
-		Region:      aws.String(endpoints.EuCentral1RegionID),
-		Endpoint:    aws.String(fmt.Sprintf("http://%s/", s.localstack.Address(localstack.APIPort))),
-		DisableSSL:  aws.Bool(true),
-	})
 }
 
 func (s *LoginServiceTestSuite) setupDatabase() {
@@ -65,8 +40,6 @@ func (s *LoginServiceTestSuite) setupDatabase() {
 }
 
 func (s *LoginServiceTestSuite) SetupSuite() {
-	s.setupLocalstack()
-	s.setupAwsLocalstack()
 	s.setupDatabase()
 
 	accountRepo, err := repository.NewAccountRepository(

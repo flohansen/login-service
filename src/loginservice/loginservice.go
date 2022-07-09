@@ -65,8 +65,3 @@ func (service *LoginService) GetAddr() string {
 func (service *LoginService) Start() error {
 	return http.ListenAndServe(service.GetAddr(), service.handler)
 }
-
-func (service *LoginService) Server() *http.Server {
-	server := &http.Server{Addr: service.GetAddr(), Handler: service.handler}
-	return server
-}

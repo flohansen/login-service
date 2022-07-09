@@ -62,27 +62,3 @@ func TestStart(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-
-func TestServer(t *testing.T) {
-	t.Cleanup(testhelper.CreateTestEnvironment(map[string]string{
-		"FITTER_LOGIN_SERVICE_HOST": "0.0.0.0",
-		"FITTER_LOGIN_SERVICE_PORT": "8001",
-	}))
-
-	mockedHashEngine := new(mocks.HashEngine)
-	mockedAccountRepo := new(mocks.AccountRepository)
-	service, _ := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
-	server := service.Server()
-
-	done := make(chan error)
-	go func() {
-		done <- server.ListenAndServe()
-	}()
-
-	select {
-	case <-time.After(200 * time.Millisecond):
-		return
-	case err := <-done:
-		t.Fatal(err)
-	}
-}

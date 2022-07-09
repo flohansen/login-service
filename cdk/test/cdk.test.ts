@@ -1,17 +1,13 @@
-// import * as cdk from 'aws-cdk-lib';
-// import { Template } from 'aws-cdk-lib/assertions';
-// import * as Cdk from '../lib/cdk-stack';
+import * as cdk from '@aws-cdk/core';
+import { LoginServiceStack } from '../lib/login-service-stack';
+import { Template } from '@aws-cdk/assertions';
 
-// example test. To run these tests, uncomment this file along with the
-// example resource in lib/cdk-stack.ts
-test('SQS Queue Created', () => {
-//   const app = new cdk.App();
-//     // WHEN
-//   const stack = new Cdk.CdkStack(app, 'MyTestStack');
-//     // THEN
-//   const template = Template.fromStack(stack);
+test('LoginServiceStack created', () => {
+    const app = new cdk.App()
 
-//   template.hasResourceProperties('AWS::SQS::Queue', {
-//     VisibilityTimeout: 300
-//   });
+    const loginServiceStack = new LoginServiceStack(app, 'LoginServiceStack');
+
+    const template = Template.fromStack(loginServiceStack);
+    template.hasResource('AWS::ECS::Cluster', {});
+    template.hasResource('AWS::EC2::VPC', {})
 });
