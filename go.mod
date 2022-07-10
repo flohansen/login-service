@@ -3,6 +3,14 @@ module flhansen/fitter-login-service
 go 1.18
 
 require (
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/julienschmidt/httprouter v1.3.0
+	github.com/lib/pq v1.10.6
+	github.com/stretchr/testify v1.8.0
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+)
+
+require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
@@ -34,11 +42,8 @@ require (
 	github.com/elgohr/go-localstack v0.0.0-20220701004640-e944bcb94f14 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/julienschmidt/httprouter v1.3.0 // indirect
-	github.com/lib/pq v1.10.6 // indirect
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.5.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
@@ -47,11 +52,9 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
