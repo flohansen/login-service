@@ -11,19 +11,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type DatabaseConfig struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	Database string
-}
-
 type LoginServiceConfig struct {
-	Host     string
-	Port     int
-	Jwt      security.JwtConfig
-	Database DatabaseConfig
+	Host string
+	Port int
+	Jwt  security.JwtConfig
 }
 
 type LoginService struct {
@@ -47,13 +38,13 @@ func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository
 }
 
 func NewConfigFromEnv() LoginServiceConfig {
-	port, _ := strconv.Atoi(os.Getenv("FITTER_LOGIN_SERVICE_PORT"))
+	port, _ := strconv.Atoi(os.Getenv("LOGIN_SERVICE_PORT"))
 
 	return LoginServiceConfig{
-		Host: os.Getenv("FITTER_LOGIN_SERVICE_HOST"),
+		Host: os.Getenv("LOGIN_SERVICE_HOST"),
 		Port: port,
 		Jwt: security.JwtConfig{
-			SignKey: os.Getenv("FITTER_LOGIN_SERVICE_JWT_SIGNKEY"),
+			SignKey: os.Getenv("LOGIN_SERVICE_JWT_SIGNKEY"),
 		},
 	}
 }

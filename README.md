@@ -29,12 +29,6 @@ and for the Golang packages
     npm run test:go
 
 ## Deploy
-### Deploy to AWS
-> Make sure you installed the [AWS Cloud Development Kit](https://aws.amazon.com/cdk/).
-
-    cdk bootstrap
-    cdk synth
-    cdk deploy
 
 ### Deploy as Docker image/container
 First, create a docker image using the instruction

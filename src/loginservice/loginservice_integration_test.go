@@ -42,13 +42,13 @@ func (s *LoginServiceTestSuite) setupDatabase() {
 func (s *LoginServiceTestSuite) SetupSuite() {
 	s.setupDatabase()
 
-	accountRepo, err := repository.NewAccountRepository(
-		s.database.Host,
-		s.database.DefaultPort(),
-		"test",
-		"test",
-		"test",
-	)
+	accountRepo, err := repository.NewAccountRepository(repository.DatabaseConfig{
+		Host:         s.database.Host,
+		Port:         s.database.DefaultPort(),
+		Username:     "test",
+		Password:     "test",
+		DatabaseName: "test",
+	})
 	if err != nil {
 		s.T().Fatal(err)
 	}

@@ -30,10 +30,13 @@ func (suite *AccountRepositoryTestSuite) SetupSuite() {
 	suite.database, _ = gnomock.Start(preset)
 	suite.T().Cleanup(func() { gnomock.Stop(suite.database) })
 
-	suite.repo, _ = NewAccountRepository(
-		suite.database.Host,
-		suite.database.DefaultPort(),
-		"test", "test", "test")
+	suite.repo, _ = NewAccountRepository(DatabaseConfig{
+		Host:         suite.database.Host,
+		Port:         suite.database.DefaultPort(),
+		Username:     "test",
+		Password:     "test",
+		DatabaseName: "test",
+	})
 
 	dsn := database.DataSourceName(
 		suite.database.Host,

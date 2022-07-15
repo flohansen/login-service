@@ -2,10 +2,6 @@ FROM alpine:3.16.0
 
 ARG GOLANG_VERSION=1.18.2
 
-ENV FITTER_LOGIN_SERVICE_HOST=0.0.0.0
-ENV FITTER_LOGIN_SERVICE_PORT=8080
-ENV AWS_REGION=eu-central-1
-
 # Install required packages
 RUN apk update
 RUN apk add go gcc bash musl-dev openssl-dev ca-certificates

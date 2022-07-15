@@ -8,6 +8,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type DatabaseConfig struct {
+	Host         string
+	Port         int
+	Username     string
+	Password     string
+	DatabaseName string
+}
+
 type Account struct {
 	Id           int
 	Username     string
@@ -28,8 +36,8 @@ type accountRepository struct {
 	db *sql.DB
 }
 
-func NewAccountRepository(host string, port int, username string, password string, databaseName string) (AccountRepository, error) {
-	dsn := database.DataSourceName(host, port, username, password, databaseName)
+func NewAccountRepository(config DatabaseConfig) (AccountRepository, error) {
+	dsn := database.DataSourceName(config.Host, config.Port, config.Username, config.Password, config.DatabaseName)
 	db, _ := sql.Open("postgres", dsn)
 
 	return &accountRepository{

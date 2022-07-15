@@ -6,27 +6,70 @@ import (
 	"flhansen/fitter-login-service/src/security"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func main() {
 	os.Exit(runApplication())
 }
 
+func createConfigFromEnvironment() (loginservice.LoginServiceConfig, repository.DatabaseConfig, error) {
+	host := os.Getenv("LOGIN_SERVICE_HOST")
+	port := os.Getenv("LOGIN_SERVICE_PORT")
+	jwtSignKey := os.Getenv("LOGIN_SERVICE_JWT_SIGN_KEY")
+	databaseHost := os.Getenv("LOGIN_SERVICE_DATABASE_HOST")
+	databasePort := os.Getenv("LOGIN_SERVICE_DATABASE_PORT")
+	databaseUser := os.Getenv("LOGIN_SERVICE_DATABASE_USER")
+	databasePass := os.Getenv("LOGIN_SERVICE_DATABASE_PASSWORD")
+	databaseName := os.Getenv("LOGIN_SERVICE_DATABASE_NAME")
+
+	var serviceConfig loginservice.LoginServiceConfig
+	var databaseConfig repository.DatabaseConfig
+
+	portValue, err := strconv.Atoi(port)
+	if err != nil {
+		return serviceConfig, databaseConfig, err
+	}
+
+	databasePortValue, err := strconv.Atoi(databasePort)
+	if err != nil {
+		return serviceConfig, databaseConfig, err
+	}
+
+	serviceConfig = loginservice.LoginServiceConfig{
+		Host: host,
+		Port: portValue,
+		Jwt: security.JwtConfig{
+			SignKey: jwtSignKey,
+		},
+	}
+
+	databaseConfig = repository.DatabaseConfig{
+		Host:         databaseHost,
+		Port:         databasePortValue,
+		Username:     databaseUser,
+		Password:     databasePass,
+		DatabaseName: databaseName,
+	}
+
+	return serviceConfig, databaseConfig, nil
+}
+
 func runApplication() int {
-	cfg := loginservice.NewConfigFromEnv()
+	serviceConfig, databaseConfig, err := createConfigFromEnvironment()
+	if err != nil {
+		fmt.Printf("An error occured while creating configuration: %v", err)
+		return 1
+	}
+
 	hashEngine := security.NewBcryptEngine()
-	accountRepo, err := repository.NewAccountRepository(
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.Username,
-		cfg.Database.Password,
-		cfg.Database.Database)
+	accountRepo, err := repository.NewAccountRepository(databaseConfig)
 	if err != nil {
 		fmt.Printf("An error occured while connecting to the database: %v", err)
 		return 1
 	}
 
-	service, err := loginservice.NewService(cfg, accountRepo, hashEngine)
+	service, err := loginservice.NewService(serviceConfig, accountRepo, hashEngine)
 	if err != nil {
 		fmt.Printf("An error occured while creating the service: %v", err)
 		return 1
