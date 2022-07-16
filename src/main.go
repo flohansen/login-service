@@ -63,17 +63,8 @@ func runApplication() int {
 	}
 
 	hashEngine := security.NewBcryptEngine()
-	accountRepo, err := repository.NewAccountRepository(databaseConfig)
-	if err != nil {
-		fmt.Printf("An error occured while connecting to the database: %v", err)
-		return 1
-	}
-
-	service, err := loginservice.NewService(serviceConfig, accountRepo, hashEngine)
-	if err != nil {
-		fmt.Printf("An error occured while creating the service: %v", err)
-		return 1
-	}
+	accountRepo := repository.NewAccountRepository(databaseConfig)
+	service := loginservice.NewService(serviceConfig, accountRepo, hashEngine)
 
 	fmt.Printf("Starting service at %s", service.GetAddr())
 	if err := service.Start(); err != nil {

@@ -24,7 +24,7 @@ type LoginService struct {
 	hashEngine  security.HashEngine
 }
 
-func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository, hashEngine security.HashEngine) (*LoginService, error) {
+func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository, hashEngine security.HashEngine) *LoginService {
 	service := &LoginService{
 		handler:     httprouter.New(),
 		config:      cfg,
@@ -34,7 +34,7 @@ func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository
 
 	service.handler.POST("/api/auth/login", service.LoginHandler)
 	service.handler.POST("/api/auth/register", service.RegisterHandler)
-	return service, nil
+	return service
 }
 
 func NewConfigFromEnv() LoginServiceConfig {

@@ -36,13 +36,13 @@ type accountRepository struct {
 	db *sql.DB
 }
 
-func NewAccountRepository(config DatabaseConfig) (AccountRepository, error) {
+func NewAccountRepository(config DatabaseConfig) AccountRepository {
 	dsn := database.DataSourceName(config.Host, config.Port, config.Username, config.Password, config.DatabaseName)
 	db, _ := sql.Open("postgres", dsn)
 
 	return &accountRepository{
 		db: db,
-	}, nil
+	}
 }
 
 func (repo *accountRepository) CreateAccount(account Account) (int, error) {

@@ -17,7 +17,7 @@ func TestGetAddr(t *testing.T) {
 
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service, _ := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
+	service := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
 	addr := service.GetAddr()
 
 	assert.Equal(t, "0.0.0.0:8000", addr)
@@ -31,7 +31,7 @@ func TestStart(t *testing.T) {
 
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service, _ := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
+	service := NewService(NewConfigFromEnv(), mockedAccountRepo, mockedHashEngine)
 
 	done := make(chan error)
 	go func() {
