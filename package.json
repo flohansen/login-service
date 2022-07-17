@@ -1,7 +1,7 @@
 {
     "scripts": {
-        "test": "npm run test:cdk && npm run test:go",
-        "test:cdk": "cd ./cdk ; npm run test",
-        "test:go": "go test ./src/..."
+        "test": "npm run test:go",
+        "test:go": "go test ./src/...",
+        "test:go:cover": "go test -cover ./src/..."
     }
 }

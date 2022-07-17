@@ -28,5 +28,4 @@ RUN apk del go
 COPY . .
 RUN go build -o build/app ./src/main.go
 
-EXPOSE ${LOGIN_SERVICE_PORT}
 CMD [ "build/app" ]
