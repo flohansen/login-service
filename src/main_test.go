@@ -8,9 +8,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRunApplicationShouldReturnErrorIfParsingEnvFailed(t *testing.T) {
+func TestRunApplicationShouldReturnErrorIfParsingServicePortFailed(t *testing.T) {
 	t.Cleanup(testhelper.CreateTestEnvironment(map[string]string{
-		"LOGIN_SERVICE_PORT": "a",
+		"LOGIN_SERVICE_PORT":          "a",
+		"LOGIN_SERVICE_DATABASE_PORT": "0",
+	}))
+
+	done := make(chan int)
+	go func() {
+		done <- runApplication()
+	}()
+
+	select {
+	case exitCode := <-done:
+		assert.Equal(t, 1, exitCode)
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("Application did not terminate")
+	}
+}
+
+func TestRunApplicationShouldReturnErrorIfParsingDatabasePortFailed(t *testing.T) {
+	t.Cleanup(testhelper.CreateTestEnvironment(map[string]string{
+		"LOGIN_SERVICE_PORT":          "0",
+		"LOGIN_SERVICE_DATABASE_PORT": "a",
 	}))
 
 	done := make(chan int)
@@ -28,7 +48,8 @@ func TestRunApplicationShouldReturnErrorIfParsingEnvFailed(t *testing.T) {
 
 func TestRunApplicationShouldReturnErrorIfStartingServiceFailed(t *testing.T) {
 	t.Cleanup(testhelper.CreateTestEnvironment(map[string]string{
-		"LOGIN_SERVICE_PORT": "-1",
+		"LOGIN_SERVICE_PORT":          "-1",
+		"LOGIN_SERVICE_DATABASE_PORT": "0",
 	}))
 
 	done := make(chan int)
@@ -47,8 +68,8 @@ func TestRunApplicationShouldReturnErrorIfStartingServiceFailed(t *testing.T) {
 func TestRunApplicationShouldSucceed(t *testing.T) {
 	t.Cleanup(testhelper.CreateTestEnvironment(map[string]string{
 		"LOGIN_SERVICE_HOST":          "localhost",
-		"LOGIN_SERVICE_PORT":          "8000",
-		"LOGIN_SERVICE_DATABASE_PORT": "5432",
+		"LOGIN_SERVICE_PORT":          "0",
+		"LOGIN_SERVICE_DATABASE_PORT": "0",
 	}))
 
 	done := make(chan int)
