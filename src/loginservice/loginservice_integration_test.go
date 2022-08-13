@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
+	"log"
 	"net/http"
 	"testing"
 	"time"
@@ -54,7 +55,7 @@ func (s *LoginServiceTestSuite) SetupSuite() {
 	s.loginService = NewService(LoginServiceConfig{
 		Host: "0.0.0.0",
 		Port: 8080,
-	}, s.accountRepo, hashEngine)
+	}, s.accountRepo, hashEngine, log.Default())
 
 	go s.loginService.Start()
 }

@@ -3,6 +3,7 @@ package loginservice
 import (
 	"flhansen/fitter-login-service/src/mocks"
 	"flhansen/fitter-login-service/src/security"
+	"log"
 	"testing"
 	"time"
 
@@ -20,7 +21,7 @@ func TestGetAddr(t *testing.T) {
 
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service := NewService(config, mockedAccountRepo, mockedHashEngine)
+	service := NewService(config, mockedAccountRepo, mockedHashEngine, log.Default())
 	addr := service.GetAddr()
 
 	assert.Equal(t, "0.0.0.0:8000", addr)
@@ -37,7 +38,7 @@ func TestStart(t *testing.T) {
 
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service := NewService(config, mockedAccountRepo, mockedHashEngine)
+	service := NewService(config, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	done := make(chan error)
 	go func() {

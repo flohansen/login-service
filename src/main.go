@@ -5,6 +5,7 @@ import (
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 )
@@ -62,9 +63,12 @@ func runApplication() int {
 		return 1
 	}
 
+	logger := log.Default()
+	logger.SetOutput(os.Stdout)
+
 	hashEngine := security.NewBcryptEngine()
 	accountRepo := repository.NewAccountRepository(databaseConfig)
-	service := loginservice.NewService(serviceConfig, accountRepo, hashEngine)
+	service := loginservice.NewService(serviceConfig, accountRepo, hashEngine, logger)
 
 	fmt.Printf("Starting service at %s", service.GetAddr())
 	if err := service.Start(); err != nil {

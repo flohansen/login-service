@@ -4,6 +4,7 @@ import (
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -20,14 +21,16 @@ type LoginService struct {
 	config      LoginServiceConfig
 	accountRepo repository.AccountRepository
 	hashEngine  security.HashEngine
+	logger      *log.Logger
 }
 
-func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository, hashEngine security.HashEngine) *LoginService {
+func NewService(cfg LoginServiceConfig, accountRepo repository.AccountRepository, hashEngine security.HashEngine, logger *log.Logger) *LoginService {
 	service := &LoginService{
 		handler:     httprouter.New(),
 		config:      cfg,
 		hashEngine:  hashEngine,
 		accountRepo: accountRepo,
+		logger:      logger,
 	}
 
 	service.handler.POST("/api/auth/login", service.LoginHandler)

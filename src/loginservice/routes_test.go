@@ -7,6 +7,7 @@ import (
 	"flhansen/fitter-login-service/src/mocks"
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,7 +31,7 @@ func TestLoginHandlerSuccess(t *testing.T) {
 		Jwt: security.JwtConfig{
 			SignKey: "secret",
 		},
-	}, mockedAccountRepo, mockedHashEngine)
+	}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuser",
@@ -65,7 +66,7 @@ func TestLoginHandlerWrongCredentials(t *testing.T) {
 	mockedAccountRepo.
 		On("GetAccountByUsername", mock.Anything).
 		Return(repository.Account{}, nil)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuser",
@@ -98,7 +99,7 @@ func TestLoginHandlerUserNotExist(t *testing.T) {
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
 	mockedAccountRepo.On("GetAccountByUsername", mock.Anything).Return(repository.Account{}, errors.New("err"))
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuserxyz",
@@ -130,7 +131,7 @@ func TestLoginHandlerUserNotExist(t *testing.T) {
 func TestLoginHandlerBadRequest(t *testing.T) {
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	requestBody := []byte("{ username: ")
 	request, err := http.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBuffer(requestBody))
@@ -157,7 +158,7 @@ func TestRegisterHandlerShouldReturnErrorIfInvalidJsonBody(t *testing.T) {
 	invalidBody := []byte(`{ username: " }`)
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(invalidBody))
@@ -180,7 +181,7 @@ func TestRegisterHandlerShouldReturnErrorIfUserAlreadyExists(t *testing.T) {
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
 	mockedAccountRepo.On("GetAccountByUsername", mock.Anything).Return(repository.Account{}, nil)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -211,7 +212,7 @@ func TestRegisterHandlerShouldReturnErrorWhenCreatingUserFailed(t *testing.T) {
 		Return(repository.Account{}, errors.New("user not found")).
 		On("CreateAccount", mock.Anything).
 		Return(-1, errors.New("could not create user"))
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -240,7 +241,7 @@ func TestRegisterHandlerShouldReturnErrorIfPasswordCouldNotBeHashed(t *testing.T
 	mockedAccountRepo.
 		On("GetAccountByUsername", mock.Anything).
 		Return(repository.Account{}, errors.New("user not found"))
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -270,7 +271,7 @@ func TestRegisterHandlerSucceeded(t *testing.T) {
 		Return(repository.Account{}, errors.New("user not found")).
 		On("CreateAccount", mock.Anything).
 		Return(1, nil)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
