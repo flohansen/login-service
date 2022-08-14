@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
-	"log"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/orlangure/gnomock"
 	"github.com/orlangure/gnomock/preset/postgres"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -52,10 +52,12 @@ func (s *LoginServiceTestSuite) SetupSuite() {
 	})
 
 	hashEngine := security.NewBcryptEngine()
+	logger := logrus.New()
+
 	s.loginService = NewService(LoginServiceConfig{
 		Host: "0.0.0.0",
 		Port: 8080,
-	}, s.accountRepo, hashEngine, log.Default())
+	}, s.accountRepo, hashEngine, logger)
 
 	go s.loginService.Start()
 }

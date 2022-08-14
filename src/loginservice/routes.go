@@ -47,17 +47,20 @@ func sendResponse(w http.ResponseWriter, status int, message string, props map[s
 func (service *LoginService) LoginHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	var request UserLoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		service.logger.Errorf("(%s) decode request body failed: %s", r.RemoteAddr, err.Error())
 		sendSimpleResponse(w, http.StatusBadRequest, "Wrong request body format.")
 		return
 	}
 
 	user, err := service.accountRepo.GetAccountByUsername(request.Username)
 	if err != nil {
+		service.logger.Warnf("(%s) login of user '%s' failed", r.RemoteAddr, request.Username)
 		sendSimpleResponse(w, http.StatusUnauthorized, "Wrong user credentials.")
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
+		service.logger.Errorf("(%s) wrong password: %s", r.RemoteAddr, err.Error())
 		sendSimpleResponse(w, http.StatusUnauthorized, "Wrong user credentials.")
 		return
 	}
@@ -72,21 +75,21 @@ func (service *LoginService) LoginHandler(w http.ResponseWriter, r *http.Request
 func (service *LoginService) RegisterHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	var request UserRegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		service.logger.Printf("[%s][ERROR] decode request body failed: %s", r.RemoteAddr, err.Error())
+		service.logger.Errorf("(%s) decode request body failed: %s", r.RemoteAddr, err.Error())
 		sendSimpleResponse(w, http.StatusInternalServerError, "Invalid request body.")
 		return
 	}
 
 	_, err := service.accountRepo.GetAccountByUsername(request.Username)
 	if err == nil {
-		service.logger.Printf("[%s][WARNING] register user '%s' failed", r.RemoteAddr, request.Username)
+		service.logger.Warnf("(%s) register user '%s' failed", r.RemoteAddr, request.Username)
 		sendSimpleResponse(w, http.StatusBadRequest, "User already exists.")
 		return
 	}
 
 	passwordHash, err := service.hashEngine.HashPassword([]byte(request.Password))
 	if err != nil {
-		service.logger.Printf("[%s][ERROR] hashing password failed: %s", r.RemoteAddr, err.Error())
+		service.logger.Errorf("(%s) hashing password failed: %s", r.RemoteAddr, err.Error())
 		sendSimpleResponse(w, http.StatusInternalServerError, "Could not register user.")
 		return
 	}
@@ -98,7 +101,7 @@ func (service *LoginService) RegisterHandler(w http.ResponseWriter, r *http.Requ
 		CreationDate: time.Now(),
 	})
 	if err != nil {
-		service.logger.Printf("[%s][ERROR] insert user '%s' into database failed: %s", r.RemoteAddr, request.Username, err.Error())
+		service.logger.Errorf("(%s) insert user '%s' into database failed: %s", r.RemoteAddr, request.Username, err.Error())
 		sendSimpleResponse(w, http.StatusInternalServerError, "Could not register user.")
 		return
 	}

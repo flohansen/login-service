@@ -5,9 +5,10 @@ import (
 	"flhansen/fitter-login-service/src/repository"
 	"flhansen/fitter-login-service/src/security"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -63,7 +64,7 @@ func runApplication() int {
 		return 1
 	}
 
-	logger := log.Default()
+	logger := logrus.New()
 	logger.SetOutput(os.Stdout)
 
 	hashEngine := security.NewBcryptEngine()

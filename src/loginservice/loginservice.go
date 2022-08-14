@@ -9,14 +9,16 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+type Logger interface {
+	Infof(format string, v ...any)
+	Warnf(format string, v ...any)
+	Errorf(format string, v ...any)
+}
+
 type LoginServiceConfig struct {
 	Host string
 	Port int
 	Jwt  security.JwtConfig
-}
-
-type Logger interface {
-	Printf(format string, v ...any)
 }
 
 type LoginService struct {
