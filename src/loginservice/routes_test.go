@@ -27,11 +27,12 @@ func TestLoginHandlerSuccess(t *testing.T) {
 	mockedAccountRepo.
 		On("GetAccountByUsername", mock.Anything).
 		Return(repository.Account{Password: string(hashedPassword)}, nil)
+	mockedLogger := new(mocks.Logger)
 	service := NewService(LoginServiceConfig{
 		Jwt: security.JwtConfig{
 			SignKey: "secret",
 		},
-	}, mockedAccountRepo, mockedHashEngine, log.Default())
+	}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuser",
@@ -66,7 +67,8 @@ func TestLoginHandlerWrongCredentials(t *testing.T) {
 	mockedAccountRepo.
 		On("GetAccountByUsername", mock.Anything).
 		Return(repository.Account{}, nil)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
+	mockedLogger := new(mocks.Logger)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	requestBody, err := json.Marshal(UserLoginRequest{
 		Username: "testuser",
@@ -158,7 +160,10 @@ func TestRegisterHandlerShouldReturnErrorIfInvalidJsonBody(t *testing.T) {
 	invalidBody := []byte(`{ username: " }`)
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
+	mockedLogger := new(mocks.Logger)
+	mockedLogger.
+		On("Printf", mock.Anything, mock.Anything)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(invalidBody))
@@ -173,6 +178,7 @@ func TestRegisterHandlerShouldReturnErrorIfInvalidJsonBody(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, responseWriter.Code)
 	assert.NotNil(t, response["status"])
 	assert.NotNil(t, response["message"])
+	mockedLogger.AssertCalled(t, "Printf", mock.Anything, mock.Anything)
 }
 
 func TestRegisterHandlerShouldReturnErrorIfUserAlreadyExists(t *testing.T) {
@@ -181,7 +187,10 @@ func TestRegisterHandlerShouldReturnErrorIfUserAlreadyExists(t *testing.T) {
 	mockedHashEngine := new(mocks.HashEngine)
 	mockedAccountRepo := new(mocks.AccountRepository)
 	mockedAccountRepo.On("GetAccountByUsername", mock.Anything).Return(repository.Account{}, nil)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
+	mockedLogger := new(mocks.Logger)
+	mockedLogger.
+		On("Printf", mock.Anything, mock.Anything)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -196,6 +205,7 @@ func TestRegisterHandlerShouldReturnErrorIfUserAlreadyExists(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, responseWriter.Code)
 	assert.NotNil(t, response["status"])
 	assert.NotNil(t, response["message"])
+	mockedLogger.AssertCalled(t, "Printf", mock.Anything, mock.Anything)
 }
 
 func TestRegisterHandlerShouldReturnErrorWhenCreatingUserFailed(t *testing.T) {
@@ -212,7 +222,10 @@ func TestRegisterHandlerShouldReturnErrorWhenCreatingUserFailed(t *testing.T) {
 		Return(repository.Account{}, errors.New("user not found")).
 		On("CreateAccount", mock.Anything).
 		Return(-1, errors.New("could not create user"))
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
+	mockedLogger := new(mocks.Logger)
+	mockedLogger.
+		On("Printf", mock.Anything, mock.Anything)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -227,6 +240,7 @@ func TestRegisterHandlerShouldReturnErrorWhenCreatingUserFailed(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, responseWriter.Code)
 	assert.NotNil(t, response["status"])
 	assert.NotNil(t, response["message"])
+	mockedLogger.AssertCalled(t, "Printf", mock.Anything, mock.Anything)
 }
 
 func TestRegisterHandlerShouldReturnErrorIfPasswordCouldNotBeHashed(t *testing.T) {
@@ -241,7 +255,10 @@ func TestRegisterHandlerShouldReturnErrorIfPasswordCouldNotBeHashed(t *testing.T
 	mockedAccountRepo.
 		On("GetAccountByUsername", mock.Anything).
 		Return(repository.Account{}, errors.New("user not found"))
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
+	mockedLogger := new(mocks.Logger)
+	mockedLogger.
+		On("Printf", mock.Anything, mock.Anything)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -256,6 +273,7 @@ func TestRegisterHandlerShouldReturnErrorIfPasswordCouldNotBeHashed(t *testing.T
 	assert.Equal(t, http.StatusInternalServerError, responseWriter.Code)
 	assert.NotNil(t, response["status"])
 	assert.NotNil(t, response["message"])
+	mockedLogger.AssertCalled(t, "Printf", mock.Anything, mock.Anything)
 }
 
 func TestRegisterHandlerSucceeded(t *testing.T) {
@@ -271,7 +289,8 @@ func TestRegisterHandlerSucceeded(t *testing.T) {
 		Return(repository.Account{}, errors.New("user not found")).
 		On("CreateAccount", mock.Anything).
 		Return(1, nil)
-	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, log.Default())
+	mockedLogger := new(mocks.Logger)
+	service := NewService(LoginServiceConfig{}, mockedAccountRepo, mockedHashEngine, mockedLogger)
 
 	// when
 	request, _ := http.NewRequest(http.MethodPost, "/api/auth/register", bytes.NewBuffer(body))
@@ -287,4 +306,5 @@ func TestRegisterHandlerSucceeded(t *testing.T) {
 	assert.NotNil(t, response["status"])
 	assert.NotNil(t, response["message"])
 	assert.NotNil(t, response["userId"])
+	mockedLogger.AssertNotCalled(t, "Printf")
 }
